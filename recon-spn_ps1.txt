@@ -1,0 +1,28 @@
+#Build LDAP Filter to look for users with SPN values registered for current domain
+$ldapFilter = "(&(objectclass=Person)(servicePrincipalName=*))"
+$domain = New-Object System.DirectoryServices.DirectoryEntry
+$search = New-Object System.DirectoryServices.DirectorySearcher
+$search.SearchRoot = $domain
+$search.PageSize = 1000
+$search.Filter = $ldapFilter
+$search.SearchScope = "Subtree"
+#Execute Search
+$results = $search.FindAll()
+#Display SPN values from the returned objects
+foreach ($result in $results)
+{
+    $userEntry = $result.GetDirectoryEntry()
+    $pwdLastSet = [datetime]::FromFileTimeUTC($result.Properties.pwdlastset[0])
+
+    Write-Host "Name = " $userEntry.name
+    Write-Host "SAM Account = " $userEntry.samaccountname
+    Write-Host "DN = " $userEntry.distinguishedname
+    Write-Host "Created = " $userEntry.whencreated
+    Write-Host "PasswordLastSet = " $pwdLastSet
+
+    foreach ($SPN in $userEntry.servicePrincipalName)
+    {
+        Write-Host "SPN = " $SPN       
+    }
+    Write-Host ""    
+}
